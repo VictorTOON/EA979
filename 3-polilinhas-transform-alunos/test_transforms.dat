@@ -1,0 +1,57 @@
+EA979V3
+480 480
+
+c  200 255 255
+
+# Aplica uma "perspectiva" global em toda a imagem
+M  1.65 0 0  0 1.4 0  0.002 0.000 1
+
+# Desloca toda a imagem um pouco para cima e para a direita
+m  1 0 0  0 1 10  0 0 1
+
+# Desenha um polígono e várias linhas paralelas
+C  64 0 0
+R 5   100 10   380 10   380 290   240 460   100 290
+# L 100  10 380  10 # Essa linha já foi desenhada na base do polígono
+L   100  50 380  50
+L   100  90 380  90
+L   100 130 380 130
+L   100 170 380 170
+L   100 210 380 210
+L   100 250 380 250
+L   100 290 380 290
+
+# Desloca os próximos desenhos para o canto superior direito
+m  1 0 430  0 1 430  0 0 1
+
+# Decide o tamanho do quadrado a ser desenhado - no caso 60 pixels de lado
+m  30 0 0  0 30 0  0 0 1
+
+# Desenha um pequeno quadrado
+C  255 0 0
+R 4  -1 -1   1 -1   1 1   -1 1
+
+# Aplica uma rotação de 15° no sentido anti-horário e desenha outro quadrado
+C  0 255 0
+m   0.966 -0.259 0    0.259 0.966 0   0 0 1
+R 4  -1 -1   1 -1   1 1   -1 1
+
+# ...e novamente
+C  0 0 255
+m   0.966 -0.259 0    0.259 0.966 0   0 0 1
+R 4  -1 -1   1 -1   1 1   -1 1
+
+# ...e novamente
+C  255 0 255
+m   0.966 -0.259 0    0.259 0.966 0   0 0 1
+R 4  -1 -1   1 -1   1 1   -1 1
+
+# ...e novamente
+C  255 255 0
+m   0.966 -0.259 0    0.259 0.966 0   0 0 1
+R 4  -1 -1   1 -1   1 1   -1 1
+
+# ...e novamente
+C  0 255 255
+m   0.966 -0.259 0    0.259 0.966 0   0 0 1
+R 4  -1 -1   1 -1   1 1   -1 1

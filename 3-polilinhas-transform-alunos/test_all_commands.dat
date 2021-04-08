@@ -1,0 +1,75 @@
+EA979V3
+640 480
+# A primeira linha do arquivo deve ser o "número mágico" EA979V3 seguido de um salto de linha \n
+# A segunda linha do arquivo deve ser composta por dois números inteiros separados por exatamente um espaço e terminados por um salto de linha, com a largura e altura da imagem a ser gerada em pixels
+# As dimensões da imagem devem ser maiores que 0 e menores ou iguais a 1024
+
+# Cada linha deve ter no máximo 10240 caracteres (contando o salto de linha)
+# Linhas em branco ou linhas que começam com # devem ser ignoradas
+
+# Uma linha que começa com c deve ser seguida por três números inteiros entre 0 e 255, e especifica a cor de fundo da imagem, além de limpar completamente a imagem
+# A cor padrão é o branco RGB(255, 255, 255) até que uma outra cor seja informada
+c  128 128 128
+# Limpa toda a imagem com a cor de fundo cinza médio, não modifica a cor da caneta de desenho
+
+# Uma linha que começa com L deve ser seguida por quatro números decimais e especifica um segmento de reta a ser traçado:
+# L X1 Y1 X2 Y2
+L  0 0  639 479
+# A linha acima traça uma diagonal completa na imagem, do canto inferior esquerdo até o canto superior direito
+
+# Uma linha que começa com C deve ser seguida por três números inteiros entre 0 e 255, e especifica a cor da caneta a ser usada nas próximas linhas
+# A cor padrão é o preto RGB(0, 0, 0) até que uma outra cor seja informada
+C  255 0 0
+# A partir de agora a cor será o vermelho
+
+# Uma linha que começa com P deve ser seguida por um número inteiro N e em seguida por N pares de números decimais e especifica uma polilinha que conecta a 1ª coordenada à 2ª, a 2ª à 3ª, etc. até a última
+# P N X1 Y1 ... XN YN
+P 4  639 0  0 0  0 479  639 479
+# A linha acima traça uma polilinha em forma de C ocupando toda a imagem
+
+# Uma linha que começa com R funciona exatamente como uma linha que começa com P, mas define um polígono (região) e portanto a última coordenada deve se conectar de volta à primeira
+R 4  10 10  629 10  629 469  10 469
+# A linha acima traça uma região retangular ocupando a imagem com uma borda de 10 pixels - apenas o perímetro da região é traçado, não o preenchimento
+
+# Uma linha que começa com M deve ser seguida por nove números decimais e especifica uma matriz de transformação em coordenadas homogêneas, em ordem lexicográfica
+M  0.5 0 0   0 0.5 0   0 0 1
+# A partir de agora essa matriz de transformação deve ser aplicada em todos os objetos a serem desenhados
+
+C  0 0 255
+
+R 4  10 10  629 10  629 469  10 469
+# A linha acima traça, em azul, uma região retangular ocupando um quarto da imagem com uma borda de 5 pixels, no canto inferior esquerdo
+
+M  1 0 0  0 1 0  0 0 1
+# A partir de agora a matriz identidade (nenhuma transformação) deve ser aplicada em todos os objetos
+# A matriz padrão é a identidade até que uma outra matriz seja informada
+
+# Uma linha que começa com m deve ser seguida por nove números decimais e especifica uma matriz de transformação em coordenadas homogêneas, em ordem lexicográfica
+# Esta matriz, ao invés de substituir a matriz atual, deve multiplicar à direita a matriz atual
+
+m  1 0 320   0 1 240    0 0 1
+# Multiplica a matriz atual (identidade) por uma matriz de translação
+
+C 0 0 0
+
+R 4  -50 -50  50 -50  50 50  -50 50
+# Desenha um quadrado preto centralizado na imagem
+
+m  0.707 -0.707 0   0.707 0.707 0   0 0 1
+# Multiplica a matriz atual por uma matriz de rotação a 45 graus no sentido anti-horário
+
+R 4  -50 -50  50 -50  50 50  -50 50
+# Desenha outro quadrado, inclinado a 45° em relação ao primeiro
+
+# O "comando" da linha (#, C, c, L, P, R, M, m) sempre deve ser o primeiro caractere da linha
+# Os parâmetros podem ser separados por um ou mais espaços em branco ou tabulações
+# A linha deve ser terminada por uma finalização de linha de texto, que pode variar de um sistema para o outro (\n ou \r ou \r\n)
+
+# A tradução das coordenadas decimais fracionárias do modelo para as coordneadas inteiras dos pixels da imagem fica a cargo de cada implementação
+
+# A implementação não precisa tratar o caso em que as coordenadas ultrapassam os limites da imagem, ou seja, não é necessário implementar o algoritmo de recorte.
+# O comportamento do programa nesses casos (e.g., aborta com erro, trata a imagem como se fosse um toróide, etc.) fica a cargo de cada implementação
+
+# M  1 0 0  0 1 0  0 0 1
+# L -30 -40 700 500
+# As linhas acima produziriam um erro pelo fato das coordenadas estarem fora dos limites da imagem - o tratamento desse erro fica a cargo da implementação
