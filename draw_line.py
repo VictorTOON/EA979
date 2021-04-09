@@ -17,43 +17,53 @@ def put_string(output):
         sys.exit(1)
 
 
-def draw_line(image, x0, y0, x1, y1, color):
-    h, w = image.shape
+def draw_line(image, x_init, y_init, x_fin, y_fin, color):
+    if(x_fin < x_init):
+        stepX = -1
+    else:
+        stepX = 1
+    if(y_fin < y_init):
+        stepY = -1
+    else:
+        stepY = 1
+    height, width = image.shape
     #Setting values for the midpoint algorithm
-    dx = abs(x1 - x0)
-    dy = abs(y1 - y0)
+    dx = abs(x_fin - x_init)
+    dy = abs(y_fin - y_init)
+    y_fin = height - y_fin - 1
+    y_init = height - y_init - 1
     #slope < 1
     if (abs(dy) <= abs(dx)):
-        delta_e = 2*dy
-        delta_ne = 2*(dy - dx)
-        d = 2*dy - dx
-        x = x0
-        y = y0
+        delta_E = 2*dy
+        delta_NE = 2*(dy - dx)
+        d_step = 2*dy - dx
+        x = x_init
+        y = y_init
         for iterate in range(dx + 1):
-            image[x][y] = color
-            if (d <= 0):
-                x = x+1
-                d = d + delta_e
+            image[y][x] = color
+            if (d_step <= 0):
+                x += stepX
+                d_step += delta_E
             else:
-                x = x+1
-                y = y+1
-                d = d + delta_ne
+                x += stepX
+                y -= stepY
+                d_step += delta_NE
     #slope > 1
     elif (abs(dy) > abs(dx)):
-        delta_e = 2*dx
-        delta_ne = 2*(dx - dy)
-        d = 2*dx - dy
-        x = x0
-        y = y0
+        delta_E = 2*dx
+        delta_NE = 2*(dx - dy)
+        d_step = 2*dx - dy
+        x = x_init
+        y = y_init
         for iterate in range(dy + 1):
-            image[x][y] = color
-            if (d <= 0):
-                y = y+1
-                d = d + delta_e
+            image[y][x] = color
+            if (d_step <= 0):
+                y -= stepY
+                d_step += delta_E
             else:
-                y = y+1
-                x = x+1
-                d = d + delta_ne
+                y -= stepY
+                x += stepX
+                d_step += delta_NE
 
 # Parses and checks command-line arguments
 MAX_SIZE = 8192
