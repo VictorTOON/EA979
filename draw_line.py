@@ -1,21 +1,49 @@
-import os
+# Renders a 2D model into a PPM image
 import sys
 import numpy as np
 
-stdout = sys.stdout.fileno()
-def put_byte(output):
-    written_n = os.write(stdout, bytes((output,)))
-    if written_n != 1:
-        print('error writing to output stream', file=sys.stderr)
-        sys.exit(1)
+# ---------- Configuration types and constants ----------
 
-def put_string(output):
+IMAGE_DTYPE = np.uint8
+COORD_DTYPE = np.int64
+MODEL_DTYPE = np.float64
+
+MAX_SIZE = 1024
+MAX_VAL = 255
+MAX_LINE_LEN = 10240-1 # 10240 characters minus the \0 terminator
+DEFAULT_BACKGROUND = 255
+CHANNELS_N = 3
+DEFAULT_COLOR = (0, 0, 0,)
+
+# ---------- Output routines ----------
+
+def put_string(output, output_file):
     output = output.encode('ascii') if isinstance(output, str) else output
-    written_n = os.write(stdout, output)
+    written_n = output_file.write(output)
     if written_n != len(output):
         print('error writing to output stream', file=sys.stderr)
         sys.exit(1)
 
+def save_ppm(image, output_file):
+    # Defines image header
+    magic_number_1 = 'P'
+    magic_number_2 = '6'
+    width  = image.shape[1]
+    height = image.shape[0]
+    end_of_header = '\n'
+
+    # Writes header
+    put_string(magic_number_1, output_file)
+    put_string(magic_number_2, output_file)
+    put_string('\n', output_file)
+    put_string('%d %d\n' % (width, height), output_file)
+    put_string('%d' % MAX_VAL, output_file)
+    put_string(end_of_header, output_file)
+
+    # Outputs image
+    put_string(image.tobytes(), output_file)
+
+# ---------- Drawing/model routines ----------
 
 def draw_line(image, x_init, y_init, x_fin, y_fin, color):
     if(x_fin < x_init):
@@ -26,7 +54,7 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
         stepY = -1
     else:
         stepY = 1
-    height, width = image.shape
+    height, width, m = image.shape
     #Setting values for the midpoint algorithm
     dx = abs(x_fin - x_init)
     dy = abs(y_fin - y_init)
@@ -65,52 +93,92 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
                 x += stepX
                 d_step += delta_NE
 
+# ---------- Main routine ----------
+
 # Parses and checks command-line arguments
-MAX_SIZE = 8192
-max_val = 255
-
-w = h = x0 = y0 = x1 = y1 = color = -1
-if len(sys.argv) > 7:
-    w = int(sys.argv[1])
-    h = int(sys.argv[2])
-    x0 = int(sys.argv[3])
-    y0 = int(sys.argv[4])
-    x1 = int(sys.argv[5])
-    y1 = int(sys.argv[6])
-    color = int(sys.argv[7])
-
-if len(sys.argv)<=7 or w<0 or w>MAX_SIZE or h<0 or h>=MAX_SIZE or x0<0 or x0>=w or x1<0 or x1>=w or y0<0 or y0>=h or \
-        y1<0 or y1>=h or color<0 or color>max_val:
-    print("usage: draw_line <W> <H> <X0> <Y0> <X1> <Y1> <COLOR> > output.pgm\n"
-          "creates a PGM image with a line from (X0, Y0) to (X1, Y1) drawin in it\n"
-          "W => image width, from 1 to %d\n"
-          "H => image height, from 1 to %d\n"
-          "<X0> <Y0> <X1> <Y1> => line coordinates, with 0 <= X < W and 0 <= Y < H\n"
-          "COLOR => \"color\" of the line in grayscale, from 0 to %d.\n" %
-          (MAX_SIZE, MAX_SIZE, max_val), file=sys.stderr)
+if len(sys.argv)!=3:
+    print("usage: python draw_2d_model.py <input.dat> <output.ppm>\n"
+          "       interprets the drawing instructions in the input file and renders\n"
+          "       the output in the NETPBM PPM format into output.ppm")
     sys.exit(1)
 
-# Defines image header
-magic_number_1 = 'P'
-magic_number_2 = '5'
-width  = w
-height = h
-end_of_header = '\n'
+input_file_name  = sys.argv[1]
+output_file_name = sys.argv[2]
 
-# Writes header
-put_string(magic_number_1)
-put_string(magic_number_2)
-put_string('\n')
-put_string('%d %d\n' % (width, height))
-put_string('%d' % max_val)
-put_string(end_of_header)
+# Reads input file and parses its header
+with open(input_file_name, 'rt', encoding='utf-8') as input_file:
+    input_lines = input_file.readlines()
 
-# Creates image...
-background = 255
-image = np.full((height, width), fill_value=background, dtype=np.uint8)
+if input_lines[0] != 'EA979V3\n':
+    print(f'input file format not recognized!', file=sys.stderr)
+    sys.exit(1)
 
-# Draws line
-draw_line(image, x0, y0, x1, y1, color)
+dimensions = input_lines[1].split()
+width = int(dimensions[0])
+height = int(dimensions[1])
 
-# Outputs image
-put_string(image.tobytes())
+if width<=0 or width>MAX_SIZE or height<=0 or height>MAX_SIZE:
+    print(f'input file has invalid image dimensions: must be >0 and <={MAX_SIZE}!', file=sys.stderr)
+    sys.exit(1)
+
+# Creates image
+image = np.full((height, width, 3), fill_value=DEFAULT_BACKGROUND, dtype=IMAGE_DTYPE)
+
+#
+# TODO: Inicialize as demais variaveis
+#
+
+# Main loop - interprets and renders drawing commands
+for line_n,line in enumerate(input_lines[2:], start=3):
+
+    if len(line)>MAX_LINE_LEN:
+        print(f'line {line_n}: line too long!', file=sys.stderr)
+        sys.exit(1)
+
+    if not line.strip():
+        # Blank line - skips
+        continue
+
+    command = line[0]
+    parameters = line[1:].strip().split()
+    def check_parameters(n):
+        if len(parameters) != n:
+            print(f'line {line_n}: command {command} expected {n} parameters but got {len(parameters)}!',
+                  file=sys.stderr)
+            sys.exit(1)
+
+    if command == 'c':
+        # Clears with new background color
+        check_parameters(CHANNELS_N)
+        background_color = np.array(parameters, dtype=IMAGE_DTYPE)
+        image[...] = background_color
+
+    elif command == 'L':
+        # Draws given line
+        check_parameters(4)
+        draw_line(image, int(parameters[0]), int(parameters[1]), int(parameters[2]), int(parameters[3]), DEFAULT_COLOR)
+
+    elif command == 'P':
+        # Draws poliline from given points
+        check_parameters(int(parameters[0])*2 + 1)
+        b = -1
+        for iterate in range(int(parameters[0]) - 1):
+            b += 2
+            draw_line(image, int(parameters[b]), int(parameters[b+1]), int(parameters[b+2]), int(parameters[b+3]), DEFAULT_COLOR)
+
+    elif command == 'R':
+        # Draws a poligon with the given points
+        check_parameters(int(parameters[0])*2 + 1)
+        b = -1
+        for iterate in range(int(parameters[0]) - 1):
+            b += 2
+            draw_line(image, int(parameters[b]), int(parameters[b+1]), int(parameters[b+2]), int(parameters[b+3]), DEFAULT_COLOR)
+        draw_line(image, int(parameters[-2]), int(parameters[-1]), int(parameters[1]), int(parameters[2]), DEFAULT_COLOR)
+
+    else:
+        print(f'line {line_n}: unrecognized command "{command}"!', file=sys.stderr)
+        sys.exit(1)
+
+# If we reached this point, everything went well - outputs rendered image file
+with open(output_file_name, 'wb') as output_file:
+    save_ppm(image, output_file)
