@@ -179,7 +179,7 @@ for line_n,line in enumerate(input_lines[2:], start=3):
     elif command == 'm':
         check_parameters(9)
 
-        matrix = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3).dot(M)
+        matrix = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3).dot(matriz)
 
     elif command == 'L':
         # Draws given line
