@@ -127,9 +127,12 @@ image = np.full((height, width, 3), fill_value=DEFAULT_BACKGROUND, dtype=IMAGE_D
 #
 # TODO: Inicialize as demais variaveis
 #
+M = np.array([[1,0,0], [0,1,0], [0,0,1]])
 
 # Main loop - interprets and renders drawing commands
 for line_n,line in enumerate(input_lines[2:], start=3):
+    if (line[0] == '#'):
+        continue
 
     if len(line)>MAX_LINE_LEN:
         print(f'line {line_n}: line too long!', file=sys.stderr)
@@ -151,7 +154,22 @@ for line_n,line in enumerate(input_lines[2:], start=3):
         # Clears with new background color
         check_parameters(CHANNELS_N)
         background_color = np.array(parameters, dtype=IMAGE_DTYPE)
-        image[...] = background_color
+        image[:, :] = background_color
+        DEFAULT_BACKGROUND = background_color
+
+    elif command == 'C':
+        check_parameters(CHANNELS_N)
+        DEFAULT_COLOR = np.array(parameters, dtype=IMAGE_DTYPE)
+
+    elif command == 'M':
+        check_parameters(9)
+
+        M = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3)
+
+    elif command == 'm':
+        check_parameters(9)
+
+        M = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3).dot(M)
 
     elif command == 'L':
         # Draws given line
