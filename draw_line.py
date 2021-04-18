@@ -14,6 +14,7 @@ MAX_LINE_LEN = 10240-1 # 10240 characters minus the \0 terminator
 DEFAULT_BACKGROUND = 255
 CHANNELS_N = 3
 DEFAULT_COLOR = (0, 0, 0,)
+matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
 # ---------- Output routines ----------
 
@@ -45,6 +46,14 @@ def save_ppm(image, output_file):
 
 # ---------- Drawing/model routines ----------
 
+def apply_matrix(matrix, x, y):
+    x = x*matrix[0][0] + y*matrix[0][1] + matrix[0][2]
+    y = x*matrix[1][0] + y*matrix[1][1] + matrix[1][2]
+    w = x*matrix[2][0] + y*matrix[2][1] + matrix[2][2]
+    x = x/w
+    y = y/w
+    return x, y
+
 def draw_line(image, x_init, y_init, x_fin, y_fin, color):
     if(x_fin < x_init):
         stepX = -1
@@ -54,7 +63,7 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
         stepY = -1
     else:
         stepY = 1
-    height, width, m = image.shape
+    height, width, trash = image.shape
     #Setting values for the midpoint algorithm
     dx = abs(x_fin - x_init)
     dy = abs(y_fin - y_init)
@@ -175,7 +184,9 @@ for line_n,line in enumerate(input_lines[2:], start=3):
     elif command == 'L':
         # Draws given line
         check_parameters(4)
-        draw_line(image, int(parameters[0]), int(parameters[1]), int(parameters[2]), int(parameters[3]), DEFAULT_COLOR)
+        x_init, y_init = apply_matrix(matrix, int(parameters[0]), int(parameters[1]))
+        x_fin, y_fin = apply_matrix(matrix, int(parameters[2]), int(parameters[3]))
+        draw_line(image, x_init, y_init, x_fin, y_fin, DEFAULT_COLOR)
 
     elif command == 'P':
         # Draws poliline from given points
@@ -183,7 +194,9 @@ for line_n,line in enumerate(input_lines[2:], start=3):
         b = -1
         for iterate in range(int(parameters[0]) - 1):
             b += 2
-            draw_line(image, int(parameters[b]), int(parameters[b+1]), int(parameters[b+2]), int(parameters[b+3]), DEFAULT_COLOR)
+            x_init, y_init = apply_matrix(matrix, int(parameters[b+0]), int(parameters[b+1]))
+            x_fin, y_fin = apply_matrix(matrix, int(parameters[b+2]), int(parameters[b+3]))
+            draw_line(image, x_init, y_init, x_fin, x_fin, DEFAULT_COLOR)
 
     elif command == 'R':
         # Draws a poligon with the given points
@@ -191,8 +204,12 @@ for line_n,line in enumerate(input_lines[2:], start=3):
         b = -1
         for iterate in range(int(parameters[0]) - 1):
             b += 2
-            draw_line(image, int(parameters[b]), int(parameters[b+1]), int(parameters[b+2]), int(parameters[b+3]), DEFAULT_COLOR)
-        draw_line(image, int(parameters[-2]), int(parameters[-1]), int(parameters[1]), int(parameters[2]), DEFAULT_COLOR)
+            x_init, y_init = apply_matrix(matrix, int(parameters[b+0]), int(parameters[b+1]))
+            x_fin, y_fin = apply_matrix(matrix, int(parameters[b+2]), int(parameters[b+3]))
+            draw_line(image, x_init, y_init, x_fin, x_fin, DEFAULT_COLOR)
+        x_init, y_init = apply_matrix(matrix, int(parameters[-2]), int(parameters[-1]))
+        x_fin, y_fin = apply_matrix(matrix, int(parameters[1]), int(parameters[2]))
+        draw_line(image, x_init, y_init, x_fin, x_fin, DEFAULT_COLOR)
 
     else:
         print(f'line {line_n}: unrecognized command "{command}"!', file=sys.stderr)
