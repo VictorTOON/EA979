@@ -14,7 +14,7 @@ MAX_LINE_LEN = 10240-1 # 10240 characters minus the \0 terminator
 DEFAULT_BACKGROUND = 255
 CHANNELS_N = 3
 DEFAULT_COLOR = (0, 0, 0,)
-matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=MODEL_DTYPE)
 
 # ---------- Output routines ----------
 
@@ -174,12 +174,12 @@ for line_n,line in enumerate(input_lines[2:], start=3):
     elif command == 'M':
         check_parameters(9)
 
-        M = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3)
+        matrix = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3)
 
     elif command == 'm':
         check_parameters(9)
 
-        M = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3).dot(M)
+        matrix = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3).dot(M)
 
     elif command == 'L':
         # Draws given line
