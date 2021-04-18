@@ -143,6 +143,7 @@ for line_n,line in enumerate(input_lines[2:], start=3):
         continue
 
     command = line[0]
+
     parameters = line[1:].strip().split()
     def check_parameters(n):
         if len(parameters) != n:
