@@ -16,8 +16,8 @@ CHANNELS_N = 3
 DEFAULT_COLOR = (0, 0, 0,)
 matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=MODEL_DTYPE)
 
-# ---------- Output routines ----------
 
+# ---------- Output routines ----------
 
 def put_string(output, output_file):
     output = output.encode('ascii') if isinstance(output, str) else output
@@ -46,8 +46,8 @@ def save_ppm(image, output_file):
     # Outputs image
     put_string(image.tobytes(), output_file)
 
-# ---------- Drawing/model routines ----------
 
+# ---------- Drawing/model routines ----------
 
 def apply_matrix(matrix, x, y):
     x1 = x*matrix[0][0] + y*matrix[0][1] + matrix[0][2]
@@ -167,12 +167,14 @@ for line_n, line in enumerate(input_lines[2:], start=3):
     if command == 'c':
         # Clears with new background color
         check_parameters(CHANNELS_N)
+
         background_color = np.array(parameters, dtype=IMAGE_DTYPE)
         image[:, :] = background_color
         DEFAULT_BACKGROUND = background_color
 
     elif command == 'C':
         check_parameters(CHANNELS_N)
+
         DEFAULT_COLOR = np.array(parameters, dtype=IMAGE_DTYPE)
 
     elif command == 'M':
@@ -197,27 +199,27 @@ for line_n, line in enumerate(input_lines[2:], start=3):
     elif command == 'P':
         # Draws poliline from given points
         parameters = list(map(int, parameters))
-        check_parameters(parameters[0] * 2 + 1)
+        NUM_PARAM, parameters = (parameters[0] * 2), parameters[1:]
+        check_parameters(NUM_PARAM)
 
-        b = -1
-        for iterate in range(parameters[0] - 1):
-            b += 2
-            x_init, y_init = apply_matrix(matrix, *parameters[(b):(b + 2)])
-            x_fin, y_fin = apply_matrix(matrix, *parameters[(b + 2):(b + 4)])
+        for ind in range(0, NUM_PARAM - 2, 2):
+            x_init, y_init = apply_matrix(matrix, *parameters[(ind):(ind + 2)])
+            x_fin, y_fin = apply_matrix(matrix, *parameters[(ind + 2):(ind + 4)])
             draw_line(image, x_init, y_init, x_fin, y_fin, DEFAULT_COLOR)
 
     elif command == 'R':
         # Draws a poligon with the given points
-        check_parameters(int(parameters[0])*2 + 1)
+        parameters = list(map(int, parameters))
+        NUM_PARAM, parameters = (parameters[0] * 2), parameters[1:]
+        check_parameters(NUM_PARAM)
 
-        b = -1
-        for iterate in range(int(parameters[0]) - 1):
-            b += 2
-            x_init, y_init = apply_matrix(matrix, int(parameters[b+0]), int(parameters[b+1]))
-            x_fin, y_fin = apply_matrix(matrix, int(parameters[b+2]), int(parameters[b+3]))
+        for ind in range(0, NUM_PARAM - 2, 2):
+            x_init, y_init = apply_matrix(matrix, *parameters[(ind):(ind + 2)])
+            x_fin, y_fin = apply_matrix(matrix, *parameters[(ind + 2):(ind + 4)])
             draw_line(image, x_init, y_init, x_fin, y_fin, DEFAULT_COLOR)
-        x_init, y_init = apply_matrix(matrix, int(parameters[-2]), int(parameters[-1]))
-        x_fin, y_fin = apply_matrix(matrix, int(parameters[1]), int(parameters[2]))
+
+        x_init, y_init = apply_matrix(matrix, *parameters[-2:])
+        x_fin, y_fin = apply_matrix(matrix, *parameters[:2])
         draw_line(image, x_init, y_init, x_fin, y_fin, DEFAULT_COLOR)
 
     else:
