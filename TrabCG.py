@@ -48,7 +48,16 @@ def save_ppm(image, output_file):
 
 
 # ---------- Drawing/model routines ----------
+'''
+Applyes the chosen matrix M to the points we want
+Args:
+     matrix: the transformation matrix
+     x: the x coordinate of the point
+     y: the y coordinate of the point
 
+Returns:
+     return the geometric coordinate of the new point
+'''
 def apply_matrix(matrix, x, y):
     x1 = x*matrix[0][0] + y*matrix[0][1] + matrix[0][2]
     y1 = x*matrix[1][0] + y*matrix[1][1] + matrix[1][2]
@@ -57,7 +66,20 @@ def apply_matrix(matrix, x, y):
     y = y1/w
     return int(x), int(y)
 
+'''
+This function applyies the Bresenham's midpoint algorithm
+(See page 45 of "Frank Klawon - Introduction to computer Graphics" for more details on it)
+Args:
+     image: the matrix that represents the image
+     x_init: the x coordinate of the initial point
+     y_init: the y coordinate of the initial point
+     x_fin: the x coordinate of the end point
+     y_fin: the y coordinate of the end point
+     color: vector representing the color of the pen (from [0,0,0] to [255,255,255])
 
+Returns:
+     no returns
+'''
 def draw_line(image, x_init, y_init, x_fin, y_fin, color):
     if(x_fin < x_init):
         stepX = -1
