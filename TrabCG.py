@@ -10,13 +10,14 @@ MODEL_DTYPE = np.float64
 
 MAX_SIZE = 1024
 MAX_VAL = 255
-MAX_LINE_LEN = 10240-1 # 10240 characters minus the \0 terminator
+MAX_LINE_LEN = 10240-1  # 10240 characters minus the \0 terminator
 DEFAULT_BACKGROUND = 255
 CHANNELS_N = 3
 DEFAULT_COLOR = (0, 0, 0,)
 matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=MODEL_DTYPE)
 
 # ---------- Output routines ----------
+
 
 def put_string(output, output_file):
     output = output.encode('ascii') if isinstance(output, str) else output
@@ -25,11 +26,12 @@ def put_string(output, output_file):
         print('error writing to output stream', file=sys.stderr)
         sys.exit(1)
 
+
 def save_ppm(image, output_file):
     # Defines image header
     magic_number_1 = 'P'
     magic_number_2 = '6'
-    width  = image.shape[1]
+    width = image.shape[1]
     height = image.shape[0]
     end_of_header = '\n'
 
@@ -46,6 +48,7 @@ def save_ppm(image, output_file):
 
 # ---------- Drawing/model routines ----------
 
+
 def apply_matrix(matrix, x, y):
     x1 = x*matrix[0][0] + y*matrix[0][1] + matrix[0][2]
     y1 = x*matrix[1][0] + y*matrix[1][1] + matrix[1][2]
@@ -53,6 +56,7 @@ def apply_matrix(matrix, x, y):
     x = x1/w
     y = y1/w
     return int(x), int(y)
+
 
 def draw_line(image, x_init, y_init, x_fin, y_fin, color):
     if(x_fin < x_init):
@@ -63,13 +67,16 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
         stepY = -1
     else:
         stepY = 1
+
     height, width, trash = image.shape
-    #Setting values for the midpoint algorithm
+
+    # Setting values for the midpoint algorithm
     dx = abs(x_fin - x_init)
     dy = abs(y_fin - y_init)
     y_fin = height - y_fin - 1
     y_init = height - y_init - 1
-    #slope < 1
+
+    # slope < 1
     if (abs(dy) <= abs(dx)):
         delta_E = 2*dy
         delta_NE = 2*(dy - dx)
@@ -77,10 +84,8 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
         x = x_init
         y = y_init
         for iterate in range(dx + 1):
-            try:
-                image[y%(height)][x%(width)] = color
-            except:
-                pass
+            image[y % (height)][x % (width)] = color
+
             if (d_step <= 0):
                 x += stepX
                 d_step += delta_E
@@ -88,7 +93,7 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
                 x += stepX
                 y -= stepY
                 d_step += delta_NE
-    #slope > 1
+    # slope > 1
     elif (abs(dy) > abs(dx)):
         delta_E = 2*dx
         delta_NE = 2*(dx - dy)
@@ -96,10 +101,8 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
         x = x_init
         y = y_init
         for iterate in range(dy + 1):
-            try:
-                image[y%(height)][x%(width)] = color
-            except:
-                pass
+            image[y % (height)][x % (width)] = color
+
             if (d_step <= 0):
                 y -= stepY
                 d_step += delta_E
@@ -108,16 +111,17 @@ def draw_line(image, x_init, y_init, x_fin, y_fin, color):
                 x += stepX
                 d_step += delta_NE
 
+
 # ---------- Main routine ----------
 
 # Parses and checks command-line arguments
-if len(sys.argv)!=3:
+if len(sys.argv) != 3:
     print("usage: python draw_2d_model.py <input.dat> <output.ppm>\n"
           "       interprets the drawing instructions in the input file and renders\n"
           "       the output in the NETPBM PPM format into output.ppm")
     sys.exit(1)
 
-input_file_name  = sys.argv[1]
+input_file_name = sys.argv[1]
 output_file_name = sys.argv[2]
 
 # Reads input file and parses its header
@@ -132,23 +136,19 @@ dimensions = input_lines[1].split()
 width = int(dimensions[0])
 height = int(dimensions[1])
 
-if width<=0 or width>MAX_SIZE or height<=0 or height>MAX_SIZE:
+if width <= 0 or width > MAX_SIZE or height <= 0 or height > MAX_SIZE:
     print(f'input file has invalid image dimensions: must be >0 and <={MAX_SIZE}!', file=sys.stderr)
     sys.exit(1)
 
 # Creates image
 image = np.full((height, width, 3), fill_value=DEFAULT_BACKGROUND, dtype=IMAGE_DTYPE)
 
-#
-# TODO: Inicialize as demais variaveis
-#
-M = np.array([[1,0,0], [0,1,0], [0,0,1]])
-
 # Main loop - interprets and renders drawing commands
-for line_n,line in enumerate(input_lines[2:], start=3):
+
+for line_n, line in enumerate(input_lines[2:], start=3):
     if (line[0] == '#'):
         continue
-    if len(line)>MAX_LINE_LEN:
+    if len(line) > MAX_LINE_LEN:
         print(f'line {line_n}: line too long!', file=sys.stderr)
         sys.exit(1)
 
@@ -178,33 +178,38 @@ for line_n,line in enumerate(input_lines[2:], start=3):
     elif command == 'M':
         check_parameters(9)
 
-        matrix = np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3)
+        matrix = np.array(parameters, dtype=MODEL_DTYPE).reshape(3, 3)
 
     elif command == 'm':
         check_parameters(9)
 
-        matrix = matrix.dot(np.array(parameters, dtype=MODEL_DTYPE).reshape(3,3))
+        matrix = matrix.dot(np.array(parameters, dtype=MODEL_DTYPE).reshape(3, 3))
 
     elif command == 'L':
         # Draws given line
         check_parameters(4)
-        x_init, y_init = apply_matrix(matrix, int(parameters[0]), int(parameters[1]))
-        x_fin, y_fin = apply_matrix(matrix, int(parameters[2]), int(parameters[3]))
+        parameters = list(map(int, parameters))
+
+        x_init, y_init = apply_matrix(matrix, *parameters[:2])
+        x_fin, y_fin = apply_matrix(matrix, *parameters[2:])
         draw_line(image, x_init, y_init, x_fin, y_fin, DEFAULT_COLOR)
 
     elif command == 'P':
         # Draws poliline from given points
-        check_parameters(int(parameters[0])*2 + 1)
+        parameters = list(map(int, parameters))
+        check_parameters(parameters[0] * 2 + 1)
+
         b = -1
-        for iterate in range(int(parameters[0]) - 1):
+        for iterate in range(parameters[0] - 1):
             b += 2
-            x_init, y_init = apply_matrix(matrix, int(parameters[b+0]), int(parameters[b+1]))
-            x_fin, y_fin = apply_matrix(matrix, int(parameters[b+2]), int(parameters[b+3]))
+            x_init, y_init = apply_matrix(matrix, *parameters[(b):(b + 2)])
+            x_fin, y_fin = apply_matrix(matrix, *parameters[(b + 2):(b + 4)])
             draw_line(image, x_init, y_init, x_fin, y_fin, DEFAULT_COLOR)
 
     elif command == 'R':
         # Draws a poligon with the given points
         check_parameters(int(parameters[0])*2 + 1)
+
         b = -1
         for iterate in range(int(parameters[0]) - 1):
             b += 2
